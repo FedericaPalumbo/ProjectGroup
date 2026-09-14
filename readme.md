@@ -1,4 +1,4 @@
-# Esame 2025
+# Esame 2026
 
 ## API server
 A partire dalla struttura di questa repo andare a sviluppare le api necessarie a soddisfare le specifiche del file `assignments-def.yaml` (aprire il file con [swagger editor](https://editor.swagger.io/)).
