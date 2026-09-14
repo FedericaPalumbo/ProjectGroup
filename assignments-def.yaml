@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: ITS 2426
+  title: ITS 2527
   description: |-
     Esame Fullstack
   version: '1'
@@ -23,7 +23,7 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/Classroom'
       responses:
-        '200':
+        '201':
           description: successful operation
           content:
             application/json:
@@ -73,7 +73,7 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/Assignment'
       responses:
-        '200':
+        '201':
           description: successful operation
           content:
             application/json:
