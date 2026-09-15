@@ -41,7 +41,7 @@ A partire dalla struttura di questa repo andare a sviluppare le api necessarie a
 ```
 
 ## APP Angular
-Questa va generata usando angular cli, niente codice di partenza. Ricordatevi di generarla con e di configurare il proxy.
+Questa va generata usando angular cli, niente codice di partenza. Ricordatevi di configurare il proxy.
 
 ### Registrazione e login
 - L'app prevede due tipologie di utenti: docente e studente, vedono le stesse pagine ma possono fare azioni diverse.
