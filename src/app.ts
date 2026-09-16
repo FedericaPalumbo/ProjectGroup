@@ -3,6 +3,9 @@ import morgan from 'morgan';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import apiRouter from './api/routes';
+import { errorHandlers } from './errors';
+import './utils/auth/local/local/local-strategy';
+
 
 const app = express();
 
@@ -12,5 +15,6 @@ app.use(bodyParser.json());
 
 app.use('/api', apiRouter);
 
+app.use(errorHandlers);
 
 export default app;

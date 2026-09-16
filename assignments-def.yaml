@@ -1,183 +1,63 @@
 openapi: 3.0.3
 info:
-  title: ITS 2527
+  title: API Conto Corrente
   description: |-
-    Esame Fullstack
+    API REST per la gestione di conti correnti, movimenti, ricariche e bonifici.
   version: '1'
+
 servers:
   - url: http://localhost:3000/api
+
 tags:
-  - name: classrooms
-  - name: users
   - name: auth
+  - name: account
+  - name: movimenti
+  - name: categorie
+  - name: ricariche
+  - name: bonifici
+
 paths:
-  /classrooms:
+  /register:
     post:
       tags:
-        - classrooms
-      operationId: createClassroom
-      summary: Creazione di una classe
-      description: DISPONIBILE SOLO PER DOCENTI. Crea una nuova classe
-      security:
-       - bearerAuth: []
+        - auth
+      summary: Registrazione di un nuovo utente
+      operationId: registerUser
       requestBody:
-        $ref: '#/components/requestBodies/Classroom'
+        $ref: '#/components/requestBodies/Register'
       responses:
         '201':
-          description: successful operation
+          description: Utente creato, in attesa di conferma email
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Classroom'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '404':
-          description: "L'utente non è un docente"
+                $ref: '#/components/schemas/User'
         '400':
-          description: viene tornato se la validazione fallisce
+          description: Validazione fallita oppure email già registrata
+
+  /register/confirm/{token}:
     get:
       tags:
-        - classrooms
-      operationId: listClassrooms
-      summary: Lista delle classi
-      security:
-       - bearerAuth: []
-      description: "Torna la lista delle classi. DOCENTE: torna tutte le classi create dal docente. STUDENTE: torna tutte le classi di cui fa parte"
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Classroom'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-  /classrooms/{classroomId}/assigments:
-    post:
-      tags:
-        - classrooms
-      operationId: createAssigment
-      summary: Creazione di una attività
-      description: DISPONIBILE SOLO PER DOCENTI. Aggiunge un'attività alla classe
-      security:
-       - bearerAuth: []
+        - auth
+      summary: Conferma dell'account tramite token
+      operationId: confirmRegistration
       parameters:
-      - in: path
-        name: classroomId
-        schema:
-          type: string
-        required: true
-        description: id della classroom a cui aggiungere l'attività
-      requestBody:
-        $ref: '#/components/requestBodies/Assignment'
-      responses:
-        '201':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Assignment'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '404':
-          description: "L'utente non è un docente, l'id della classroom non esiste o la classe è stata creata da un altro docente"
-        '400':
-          description: viene tornato se la validazione fallisce
-    get:
-      tags:
-        - classrooms
-      operationId: listAssignments
-      summary: Creazione di una attività
-      description: Torna la lista delle attività assegnate alla classse
-      security:
-       - bearerAuth: []
-      parameters:
-      - in: path
-        name: classroomId
-        schema:
-          type: string
-        required: true
-        description: id della classroom a cui aggiungere l'attività
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Assignment'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '404':
-          description: "L'id della classroom non esiste, lo studente non è iscritto o il docente non è quello che ha creato la classe"
-  /classrooms/{classroomId}/assignments/{id}:
-    patch:
-      tags:
-        - classrooms
-      operationId: completeAssignment
-      summary: Completamento di una attività
-      description: DISPONIBILE SOLO PER STUDENTI. Segna l'attività come completata
-      security:
-       - bearerAuth: []
-      parameters:
-      - in: path
-        name: classroomId
-        schema:
-          type: string
-        required: true
-        description: id della classroom a cui aggiungere l'attività
-      - in: path
-        name: id
-        schema:
-          type: string
-        required: true
-        description: id dell'attività da completare
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Assignment'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '404':
-          description: "L'utente non è uno studente, l'id della classroom non esiste, l'id dell'attività non esiste o l'attività non è associata a quella classroom"
-        '400':
-          description: viene tornato se l'utente ha già completato l'attività
-  /users:
-    get:
-      tags:
-        - users
-      summary: List users
-      description: "Ritorna la lista di utenti registrati all'applicazione. La lista è filtrabile per ruolo tramite il queryparam, di default vengono tornati tutti gli utenti."
-      operationId: listUsers
-      security:
-       - bearerAuth: []
-      parameters:
-        - in: query
-          name: type
+        - in: path
+          name: token
           schema:
             type: string
-            enum: ['student', 'teacher']
           required: true
-          description: filtra gli utenti a seconda del ruolo
+          description: Token di conferma ricevuto via email
       responses:
         '200':
-          description: successful operation
+          description: Account confermato; viene creato automaticamente il movimento di apertura con saldo 0
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/User'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
+                $ref: '#/components/schemas/User'
         '400':
-          description: viene tornato se il query param non è un valore valido
+          description: Token non valido o scaduto
+
   /login:
     post:
       tags:
@@ -188,91 +68,317 @@ paths:
         $ref: '#/components/requestBodies/Login'
       responses:
         '200':
-          description: successful operationì
+          description: Login effettuato con successo
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Login'
         '400':
-          description: Invalid username/password supplied
-  /register:
-    post:
+          description: Credenziali non valide
+
+  /account/me:
+    get:
       tags:
-        - auth
-      summary: Registrazione
-      description: ''
-      operationId: registerUser
-      requestBody:
-        $ref: '#/components/requestBodies/Register'
+        - account
+      summary: Recupera i dati principali dell'account
+      operationId: getAccountMe
+      security:
+        - bearerAuth: []
       responses:
-        '201':
-          description: successful operationì
+        '200':
+          description: Dati utente, saldo attuale e ultimi 5 movimenti
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountMe'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /account/profilo:
+    get:
+      tags:
+        - account
+      summary: Recupera il profilo dell'utente autenticato
+      operationId: getAccountProfile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dati del conto corrente senza password
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /account/password:
+    patch:
+      tags:
+        - account
+      summary: Cambio password
+      operationId: changePassword
+      security:
+        - bearerAuth: []
+      requestBody:
+        $ref: '#/components/requestBodies/ChangePassword'
+      responses:
+        '200':
+          description: Password aggiornata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Vecchia password errata o nuova password non valida
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /movimenti:
+    get:
+      tags:
+        - movimenti
+      summary: Lista e ricerca dei movimenti
+      operationId: listMovimenti
+      description: |-
+        Restituisce i movimenti dell'utente autenticato ordinati per data decrescente.
+        I filtri categoriaId, dataInizio e dataFine sono opzionali.
+        saldoFinale viene restituito solo quando non sono presenti filtri per categoria o intervallo di date.
+        Se format è valorizzato, la risposta viene esportata nel formato richiesto.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+          required: true
+          description: Numero massimo di movimenti da restituire
+        - in: query
+          name: categoriaId
+          schema:
+            type: string
+          required: false
+          description: Filtra i movimenti per categoria
+        - in: query
+          name: dataInizio
+          schema:
+            type: string
+            format: date
+          required: false
+          description: Data iniziale dell'intervallo
+        - in: query
+          name: dataFine
+          schema:
+            type: string
+            format: date
+          required: false
+          description: Data finale dell'intervallo
+        - in: query
+          name: format
+          schema:
+            type: string
+            enum:
+              - csv
+              - xlsx
+          required: false
+          description: Se valorizzato, esporta i risultati nel formato indicato
+      responses:
+        '200':
+          description: Lista dei movimenti oppure file di esportazione
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovimentiResponse'
+            text/csv:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Parametri non validi, ad esempio dataInizio maggiore di dataFine o limit non valido
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /movimenti/{id}:
+    get:
+      tags:
+        - movimenti
+      summary: Dettaglio di un movimento
+      operationId: getMovimento
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: Identificativo del movimento
+      responses:
+        '200':
+          description: Dettaglio completo del movimento
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movimento'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Movimento non trovato o non appartenente all'utente autenticato
+
+  /categorie:
+    get:
+      tags:
+        - categorie
+      summary: Lista delle categorie di movimento
+      operationId: listCategorie
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista delle categorie disponibili
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Categoria'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /ricariche:
+    post:
+      tags:
+        - ricariche
+      summary: Effettua una ricarica telefonica
+      operationId: createRicarica
+      security:
+        - bearerAuth: []
+      requestBody:
+        $ref: '#/components/requestBodies/Ricarica'
+      responses:
+        '201':
+          description: Ricarica effettuata e movimento di uscita creato
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movimento'
+        '400':
+          description: Saldo insufficiente o dati non validi
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /bonifici:
+    post:
+      tags:
+        - bonifici
+      summary: Effettua un bonifico tra conti
+      operationId: createBonifico
+      security:
+        - bearerAuth: []
+      requestBody:
+        $ref: '#/components/requestBodies/Bonifico'
+      responses:
+        '201':
+          description: Bonifico effettuato e movimento creato
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movimento'
+        '400':
+          description: Saldo insufficiente
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: IBAN destinatario non presente nei conti correnti
+
 components:
   responses:
     UnauthorizedError:
-      description: Access token is missing or invalid
+      description: Access token assente o non valido
+
   schemas:
-    Assignment:
-      type: object
-      properties:
-        id:
-          type: "string"
-          description: "id univoco generato lato server"
-        title:
-          type: "string"
-        studentsCount:
-          type: "integer"
-        completedCount:
-          type: "integer"
-        completed:
-          type: "boolean"
-          description: "SOLO PER STUDENTI: descrive se lo studente ha già completato l'attività"
-        createdAt:
-          type: string
-          format: date
-          description: "data di creazione dell'attività"
-        createdBy:
-          $ref: '#/components/schemas/User'
-    Classroom:
-      type: object
-      properties:
-        id:
-          type: "string"
-          description: "id univoco generato lato server"
-        name:
-          type: "string"
-          description: "nome della classe"
-        studentsCount:
-          type: integer
-          description: "numero di studenti nella classe"
-        createdBy:
-          $ref: '#/components/schemas/User'
     User:
       type: object
+      description: Dati del conto corrente senza password
       properties:
         id:
           type: string
-          example: 'someUserId'
-        firstName:
+          description: ID univoco generato lato server
+        email:
           type: string
-          example: John
-        lastName:
+          format: email
+        nomeTitolare:
           type: string
-          example: James
-        role:
+        cognomeTitolare:
           type: string
-          enum: ['student', 'teacher']
-          example: student
-        fullName:
+        dataApertura:
           type: string
-          example: John James
-        picture:
+          format: date
+        iban:
           type: string
-          example: 'https//somedomain.com/somepicture.png'
+      required:
+        - id
+        - email
+        - nomeTitolare
+        - cognomeTitolare
+        - dataApertura
+        - iban
+
+    Movimento:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID univoco del movimento
+        contoCorrenteId:
+          type: string
+        data:
+          type: string
+          format: date-time
+        importo:
+          type: number
+          format: double
+        saldo:
+          type: number
+          format: double
+        categoriaMovimentoId:
+          type: string
+        categoria:
+          $ref: '#/components/schemas/Categoria'
+        descrizioneEstesa:
+          type: string
+      required:
+        - id
+        - contoCorrenteId
+        - data
+        - importo
+        - saldo
+        - categoriaMovimentoId
+        - descrizioneEstesa
+
+    Categoria:
+      type: object
+      properties:
+        id:
+          type: string
+        nomeCategoria:
+          type: string
+        tipologia:
+          type: string
+          enum:
+            - Entrata
+            - Uscita
+      required:
+        - id
+        - nomeCategoria
+        - tipologia
+
     Login:
       type: object
       properties:
@@ -281,85 +387,140 @@ components:
         token:
           type: string
           description: JWT token
+      required:
+        - user
+        - token
+
+    AccountMe:
+      type: object
+      properties:
+        utente:
+          $ref: '#/components/schemas/User'
+        saldo:
+          type: number
+          format: double
+        ultimiMovimenti:
+          type: array
+          maxItems: 5
+          items:
+            $ref: '#/components/schemas/Movimento'
+      required:
+        - utente
+        - saldo
+        - ultimiMovimenti
+
+    MovimentiResponse:
+      type: object
+      properties:
+        movimenti:
+          type: array
+          items:
+            $ref: '#/components/schemas/Movimento'
+        saldoFinale:
+          type: number
+          format: double
+          description: Presente solo quando non sono stati applicati filtri categoriaId, dataInizio o dataFine
+      required:
+        - movimenti
+
   requestBodies:
-    Login:
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              username:
-                type: string
-                example: 'test@test.com'
-              password:
-                type: string
-                example: 'Password1!'
-            required:
-              - username
-              - password
     Register:
       content:
         application/json:
           schema:
             type: object
             properties:
-              firstName:
+              email:
                 type: string
-                example: John
-              lastName:
-                type: string
-                example: James
-              role:
-                type: string
-                enum: ['student', 'teacher']
-                example: student
-              picture:
-                type: string
-                example: 'https//somedomain.com/somepicture.png'
-              username:
-                type: string
+                format: email
               password:
                 type: string
+                format: password
+              confermaPassword:
+                type: string
+                format: password
+              nomeTitolare:
+                type: string
+              cognomeTitolare:
+                type: string
             required:
-              - firstName
-              - lastName
-              - picture
-              - role
-              - username
+              - email
               - password
-    Assignment:
+              - confermaPassword
+              - nomeTitolare
+              - cognomeTitolare
+
+    Login:
       content:
         application/json:
           schema:
             type: object
             properties:
-              title:
+              email:
                 type: string
-                example: "Completare esercizio"
-                description: descrizione dell'attività
+                format: email
+              password:
+                type: string
+                format: password
             required:
-              - title
-    Classroom:
+              - email
+              - password
+
+    ChangePassword:
       content:
         application/json:
           schema:
             type: object
             properties:
-              name:
+              vecchiaPassword:
                 type: string
-                example: "Frontend"
-                description: nome della classe
-              students:
-                type: array
-                description: "Lista degli id degli studenti da aggiungere"
-                example: ["id1", "id2"]
-                items:
-                  type: string
+                format: password
+              nuovaPassword:
+                type: string
+                format: password
+              confermaNuovaPassword:
+                type: string
+                format: password
             required:
-              - name
-              - students
+              - vecchiaPassword
+              - nuovaPassword
+              - confermaNuovaPassword
+
+    Ricarica:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              numeroTelefonico:
+                type: string
+              operatore:
+                type: string
+              taglio:
+                type: number
+                format: double
+            required:
+              - numeroTelefonico
+              - operatore
+              - taglio
+
+    Bonifico:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              ibanDestinatario:
+                type: string
+              importo:
+                type: number
+                format: double
+            required:
+              - ibanDestinatario
+              - importo
+
   securitySchemes:
-    bearerAuth:            # arbitrary name for the security scheme
+    bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
