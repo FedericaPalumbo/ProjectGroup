@@ -1,4 +1,4 @@
-import { User as AppUser } from "../../../api/user/user.entity";
+import { User as AppUser } from "../../api/user/user.entity";
 import './local/local-strategy';
 import './jwt/jwt-strategy';
 

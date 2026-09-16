@@ -1,4 +1,5 @@
-import { User } from "../../../../api/user/user.entity";
+import { Types } from "mongoose";
+import { User } from "../../../api/user/user.entity";
 
 export type UserIdentity = {
   id: string;
@@ -7,5 +8,6 @@ export type UserIdentity = {
     username: string;
     hashedPassword: string;
   };
-  user: User;
+  /** ObjectId in scrittura/query; User dopo populate (pre findOne nel model). */
+  user: User | Types.ObjectId;
 }

@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import { TypedRequest } from "../../utils/typed-request";
 import { registerDto } from "./auth.dto";
-import UserService from "../user/user.sevice";
-import { omit, pick } from 'lodash';
+import UserService from "../user/user.service";
+import { pick } from 'lodash';
 import { UserExistsError } from "../../errors/user-exists.error";
 import passport from "passport";
 import * as jwt from 'jsonwebtoken';
@@ -12,11 +12,11 @@ export const register = async (
   res: Response,
   next: NextFunction) => {
   try {
-    const userData = omit(req.body, 'username', 'password');
-    const credentials = pick(req.body, 'username', 'password');
+    const profile = pick(req.body, 'nomeTitolare', 'cognomeTitolare');
+    const credentials = { username: req.body.email, password: req.body.password };
 
-    const newUser = await UserService.add(userData, credentials);
-    res.json(newUser);
+    const newUser = await UserService.add(profile, credentials);
+    res.status(201).json(newUser);
 
   } catch (err) {
     if (err instanceof UserExistsError) {
@@ -54,7 +54,6 @@ export const login = async (
           return;
         }
 
-        // generare token
         const token = jwt.sign(user, 'my_jwt_secret', { expiresIn: '7 days' })
         res.json({
           user,

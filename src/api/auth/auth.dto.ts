@@ -1,30 +1,30 @@
-import { IsEmail, IsString, IsUrl, Matches } from "class-validator";
+import { Equals, IsEmail, IsString, Matches } from "class-validator";
+
+const passwordPattern = '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,}$';
 
 export class registerDto {
   @IsEmail()
-  username: string;
+  email: string;
 
-  @Matches(
-    new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,}$'),
-    {
-      message: 'password must contain at least 1 uppercase letter, 1 lowercase letter, 1 number and 1 special character'
-    }
-  )
+  @Matches(new RegExp(passwordPattern), {
+    message:
+      'password must contain at least 1 uppercase letter, 1 lowercase letter, 1 number and 1 special character',
+  })
   password: string;
 
-  @IsString()
-  firstName: string;
+  @Equals('password', { message: 'confermaPassword must match password' })
+  confermaPassword: string;
 
   @IsString()
-  lastName: string;
+  nomeTitolare: string;
 
-  @IsUrl()
-  picture: string;
+  @IsString()
+  cognomeTitolare: string;
 }
 
 export class loginDto {
   @IsEmail()
-  username: string;
+  email: string;
 
   @IsString()
   password: string;

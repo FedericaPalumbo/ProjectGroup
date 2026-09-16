@@ -1,19 +1,19 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from 'passport-local';
 import { UserIdentityModel } from "./user-identity.model";
+import { User } from "../../../api/user/user.entity";
 import * as bcrypt from 'bcrypt';
 
 passport.use('local', new LocalStrategy(
   {
-    usernameField: 'username',
+    usernameField: 'email',
     passwordField: 'password'
   },
   async function(username, password, done) {
     try {
       const identity = await UserIdentityModel.findOne({ 'credentials.username': username});
-      // non trovo l'utente
       if (!identity) {
-        return done(null, false, { message: `username ${username} not found` });
+        return done(null, false, { message: `email ${username} not found` });
       }
 
       const match = await bcrypt.compare(password, identity.credentials.hashedPassword);
@@ -21,7 +21,8 @@ passport.use('local', new LocalStrategy(
         return done(null, false, { message: 'invalid password' });
       }
 
-      const user = identity.toObject().user;
+      // populate automatico nel model UserIdentity (pre findOne)
+      const user = identity.toObject().user as User;
 
       done(null, user);
 
