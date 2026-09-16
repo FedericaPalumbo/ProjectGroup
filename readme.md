@@ -1,82 +1,72 @@
-# Esame 2026
+Project Work Gestione Conti Correnti
+Creare una applicazione in grado di gestire dei conti correnti. 
+Struttura del database (il tipo di database è a scelta):
+TContiCorrenti (decidere i tipi di dati)
+ContoCorrenteID		
+Email				 
+Password			
+CognomeTitolare		
+NomeTitolare			
+DataApertura			
+IBAN				
+TMovimentiContoCorrente (decidere i tipi di dati)
+MovimentoID			
+ContoCorrenteID		
+Data				
+Importo			
+Saldo				
+CategoriaMovimentoID		
+DescrizioneEstesa		
 
-## API server
-A partire dalla struttura di questa repo andare a sviluppare le api necessarie a soddisfare le specifiche del file `assignments-def.yaml` (aprire il file con [swagger editor](https://editor.swagger.io/)).
+TCategorieMovimenti  (decidere i tipi di dati)
+CategoriaMovimentoID		
+NomeCategoria			
+Tipologia 			 
+Caricare delle CategorieMovimenti (Apertura Conto, Bonifico Entrata, Bonifico Uscita, Prelievo contanti, Pagamento Utenze, Ricarica, Versamento Bancomat etc…). Ogni Categoria deve avere la tipologia corretta (“Entrata” o “Uscita”)
 
-### Descrizione
-- L'app permette a un docente di assegnare attività ai suoi studenti e agli studenti di dire se hanno completato l'attività (SI o NO)
-- Il docente può creare una classe e assegnare degli utenti di tipo studente alla classe
-- All'interno della classe il docente può creare un'attività
-- Gli studenti vedono la lista delle classi di cui fanno parte e per ogni classe le attività da fare
-- Ogni studente può dichiarare di aver finito l'attività
-- Il docente vede solo le classi da lui create e per ogni classe le attività con l'avanzamento del completamento (19/25)
 
-### Indicazioni
-- Tutte le api ad eccezione di quelle di autenticazione sono protette tramite token JWT
-- Non salvare più dati del necessario nelle collezioni, utilizzare `virtual` e `ref` quando possibile
-- La repo ha già una serie di dipendenze dichiarate (penso tutte quelle che vi serviranno)
-- Leggere bene le definizioni delle api tramite swagger, contengono campi required, condizioni di errore e descrizioni sul comportamento. ALCUNI COMPORTAMENTI VARIANO A SECONDA DEL RUOLO
-- Non abbiate paura di fare copia incolla dal codice scritto a lezione, possibilmente prima accertatevi di averlo capito. Diverso è fare copia incolla da un compagno, non è apprezzato.
-- **campo completed**: è visibile solo per gli studenti, determina se l'utente ha già completato l'attività. In questo caso non è possibile (o almeno non semplice) usare un virtual perché bisogna fare il controllo con l'utente che chiama l'API. E' quindi necessario fare l'elaborazione da codice. ATTENZIONE: se si prova ad aggiungere una proprietà a un oggetto di mongoose che non è definita nello schema questa viene eliminata quando viene tornata la risposta, è necessario trasformare prima l'oggetto in plain object (toObject) e aggiungere poi la proprietà
-- l'esercizio prevede di avere api "annidate" ( /classroom/{classroomId}/assignment ). Non è nulla di strano, nei router potete definire più parametri e trovate tutti i valori nell'oggetto req.params. E' anche possibile annidare ulteriormente i ruouter se volete organizzare meglio il codice.
-- **per la gestione dei ruoli** ci sono due casi:
-  - api a cui un tipo di utente non può accedere: gradirei un middleware per fare il controllo a monte
-  - api che hanno comportamenti diversi a seconda del ruolo: il controllo e la logica vanno gestiti dal codice (nel controller)
-- **assegnazione degli studenti alla classe**: non è un caso che non si possano modificare gli utenti iscritti, è per semplificarvi la vita. Avete bisogno di tenere traccia di chi ha completato un'attività, al momento della creazione prendetevi la lista degli utenti dalla classe e create un nuovo array per la classe con la struttura descritta in seguito. ATTENZIONE: la lista non viene tornata dalle api, tornano solo il conteggio. Usate un virtual
-```js
-{
-  title: "Completare esercizio",
-  students: [
-    {
-      studentId: "id1",
-      completed: false
-    },
-    {
-      studentId: "id2",
-      completed: false
-    }
-  ]
-  ...
-}
-```
+L’applicazione è strutturata in 2 parti:
+WebApi in grado di gestire tutte le chiamate richieste. La tecnologia/linguaggio della WebApi è a scelta.
+Frontend web basato su Angular. Chi vuole può usare un altro framework.
+La applicazione deve essere pubblicata online 
+Funzionalità/Pagine richieste nella applicazione Web:
+Funzionalità di Registrazione
+L’utente deve compilare Email, Password, ConfermaPassword, NomeTitolare, CognomeTitolare.
+Prevedere un controllo lato client:
+Obbligo di caricamento di tutti i dati
+validità formale della mail
+Password almeno 8 caratteri, una maiuscola e un simbolo 
+Password uguale a conferma password
+Lato WebApi: rifare le verifiche lato client e verificare che la email non sia già esistente. Se la mail non esiste: Inserire il record in TContiCorrenti. E’necessario implementare l’invio della mail di conferma registrazione.  Una volta confermata la registrazione inserire in automatico nel relativo conto corrente un movimento di apertura con tutti gli importi a zero (sia importo che saldo)
+La password deve essere salvata su db in formato criptato
+L’IBAN verrà caricato a mano successivamente dopo la registrazione dell’utente (anche se nella applicazioni reali viene generato automaticamente)
+Per poter continuare con il project work caricare manualmente almeno 10 Movimenti per due  conti correnti di test: il primo movimento deve avere come Descrizione Estesa “ Apertura Conto” e poi caricare gli altri movimenti (sia di Entrata che di Uscita). Attenzione che in ogni movimento va caricato il saldo finale (in base al saldo precedente). La descrizione estesa per esempio è “Bonifico disposto a favore di….” Oppure “ Addebito diretto a favore di…” oppure “Bonifico disposto da…”. 
+Funzionalità di login
+Inserimento di Email e Password 
+Se dopo 30 secondi non si preme il pulsante “login” il form viene resettato e si comunica che si è impiegato troppo tempo a fare login
+Se il login è valido si viene reinviati ad una home page web ove viene visualizzato: Benvenuto Mario Rossi, il saldo del conto corrente e una tabella con gli ultimi 5 movimenti. 
+Nella tabella con gli ultimi 5 movimenti deve essere presente un pulsante o link  “Dettagli” che permette di accedere alla pagina web   DettaglioMovimento dove verrà  visualizzato il dettaglio del movimento selezionato (tutti i campi della TMovimentiContoCorrente)
+Per ogni accesso memorizzare in una Tabella  l’indirizzo IP, data/ora e se l’accesso è valido oppure no.
+Funzionalità di RicercaMovimenti1
+Deve essere possibile visualizzare gli ultimi n movimenti (n deciso dall’utente) e deve visualizzare il saldo finale del conto corrente. I movimenti verranno visualizzati in una tabella in ordine decrescente di Data (Data, Importo, NomeCategoria).  
+Possibilità di esportazione dei movimenti in formato excel oppure csv (è sufficiente uno dei due)
+Funzionalità di RicercaMovimenti2
+Deve essere possibile visualizzare  gli ultimi n movimenti (n deciso dall’utente)  di una certa CategoriaMovimenti scelta dall’utente. Non visualizza il saldo finale. I movimenti verranno visualizzati in una tabella in ordine decrescente di Data (Data, Importo, NomeCategoria).  
+Possibilità di esportazione dei movimenti in formato excel oppure csv (è sufficiente uno dei due)
+Funzionalità di RicercaMovimenti3: 
+Deve essere possibile visualizzare  gli ultimi n movimenti (n deciso dall’utente)  fra due date (scelte dall’utente) . Non visualizza il saldo finale.  I movimenti verranno visualizzati in una tabella  in ordine decrescente di Data (Data, Importo, NomeCategoria).  
+Possibilità di esportazione dei movimenti in formato excel oppure csv (è sufficiente uno dei due)
+Ricarica di un cellulare:
+L’utente deve inserire: numero telefonico, operatore (iliad, tim, vodafone etc..) e del taglio della ricarica tramite (5,10,20,30 euro etc..). La procedura andrà ad inserire un nuovo record in TMovimenti col relativo saldo aggiornato.
+Va prima verificato che ci sia saldo disponibile
+Memorizzare in una Tabella  l’indirizzo IP, data/ora e se l’operazione è andata a buone fine o meno.
+Bonifico da un conto corrente ad un altro conto corrente della stessa applicazione
+Procedura per l’inserimento dell’IBAN del destinatario e importo bonifico
+Va verificato che l’IBAN sia presente in TContiCorrenti
+Va verificato che ci sia saldo disponibile
+Memorizzare in una Tabella  l’indirizzo IP, data/ora e se l’operazione è andata a buone fine o meno.
+Modifica Password (ovviamente possibile solo se l’utente è loggato). Memorizzare in una Tabella  l’indirizzo IP, data/ora e se l’operazione è andata a buone fine o meno. 
+“Profilo” dove vengono visualizzati tutti i dati della  TContiCorrenti (a parte ovviamente la password)
+Tutte le varie pagine saranno accessibili tramite un menu (dopo il login) 
 
-## APP Angular
-Questa va generata usando angular cli, niente codice di partenza. Ricordatevi di configurare il proxy.
 
-### Registrazione e login
-- L'app prevede due tipologie di utenti: docente e studente, vedono le stesse pagine ma possono fare azioni diverse.
-- La pagina di login è comune, sia il docente che lo studente poi vanno alla lista delle classi a cui possono accedere:
-  - Il docente vedrà le classi che ha creato
-  - Lo studente vedrà le classi di cui fa parte
-- La pagina di registrazione è la stessa, oltre ai campi classici l'utente decide se registrarsi come docente o come studente
-- L'app prevede una navbar con l'utente loggato o il pulsante di login
-- Tutte le pagine richiedono autenticazione
-
-### Lista classi
-- La pagina presenta una lista con il nome della classe, il nome del docente che l'ha creata e il numero di studenti che ne fanno parte
-- Il docente ha a disposizione anche un pulsante di aggiunta tramite il quale può andare a creare una nuova classe:
-  - Per creare una classe è necessario darle un nome e selezionare gli studenti che ne fanno parte. Una volta creata non è modificabile
-- Premendo su una delle classi sia studenti che docenti entrano nella pagina delle attività
-
-### Pagina attività (o pagina della classe)
-- Questa pagina presenta una lista di tutte le attività create. Ogni elemento prevede:
-  - Descrizione dell'attività
-  - Data di creazione dell'attività
-  - Numero di studenti che l'hanno completata rispetto al totale
-  - Un pulsante di completamento (visibile solo agli studenti se non hanno ancora completato l'attività)
-- Ogni utente può accedere a questa pagina solo se è il docente che ha creato la classe o se è uno studente iscritto a questa classe.
-
-### Bonus (punti extra)
-- Dare la possibilità al docente, premendo sull'attività, di vedere gli studenti che hanno o non hanno completato l'attività
-- Registrare, oltre al completamento, anche la data di completamento
-
-### Indicazioni generali
-- Installare e utilizzare ngboostrap e i suoi componenti (documentazione del corso)
-- Aggiungere la navbar alla pagina con l'utente loggato e il logout (come fatto in classe)
-- Controllate bene nelle api quali dati devono essere mandati e quali sono obbligatori o opzionali.
-- Non vi preoccupate troppo dello stile, ma datemi almeno l'impressione di averci provato
-- Guardate bene la documentazione di [ng-bootstrap](https://ng-bootstrap.github.io/) e cercate componenti che vi possano essere utili
-- Guardate in particolare gli esempi e cercate di capire dalle api della libreria se ci sono delle configurazioni da applicare per ottenere i risultati che desiderate
-- Suddividete quanto più possibile in componenti, se un comportamento si ripete fare in modo di avere qualcosa di riutilizzabile
-- Non abbiate paura di fare copia incolla dal codice scritto a lezione, possibilmente prima accertatevi di averlo capito. Diverso è fare copia incolla da un compagno, non è apprezzato.
-- **per il controllo dei ruoli** potete creare una direttiva simile a *ifAuthenticated se ve la sentite, ma va bene anche gestire tutto semplicemente dal codice della pagina. Non ci sono penalizzazioni.
