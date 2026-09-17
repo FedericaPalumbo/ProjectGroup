@@ -54,6 +54,7 @@ export const login = async (
           return;
         }
 
+        // generare token
         const token = jwt.sign(user, 'my_jwt_secret', { expiresIn: '7 days' })
         res.json({
           user,

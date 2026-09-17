@@ -4,7 +4,6 @@ import { isAuthenticated } from '../../utils/auth/authenticated.middleware';
 import { ChangePasswordDto } from './user.dto';
 import { changePassword, getAccountMe, getAccountProfile } from './user.controller';
 
-/** Route swagger tag "account" — persistenza e dominio restano in user.service / user.model */
 const router = Router();
 
 router.get('/me', isAuthenticated, getAccountMe);

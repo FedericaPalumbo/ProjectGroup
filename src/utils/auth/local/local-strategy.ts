@@ -12,6 +12,7 @@ passport.use('local', new LocalStrategy(
   async function(username, password, done) {
     try {
       const identity = await UserIdentityModel.findOne({ 'credentials.username': username});
+      // non trovo l'utente
       if (!identity) {
         return done(null, false, { message: `email ${username} not found` });
       }

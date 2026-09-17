@@ -1,4 +1,5 @@
-import { Equals, IsString, Matches } from 'class-validator';
+//validazione input
+import { IsString, Matches } from 'class-validator';
 
 const passwordPattern = '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,}$';
 
@@ -12,6 +13,6 @@ export class ChangePasswordDto {
   })
   nuovaPassword: string;
 
-  @Equals('nuovaPassword', { message: 'confermaNuovaPassword must match nuovaPassword' })
+  @IsString()
   confermaNuovaPassword: string;
 }

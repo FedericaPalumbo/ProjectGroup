@@ -1,3 +1,6 @@
+//Contiene le credenziali di login dell'utente
+//come l'utente si autentica (provider + credenziali).
+
 import { model, Schema } from "mongoose";
 import { UserIdentity } from "./user-identity.entity";
 

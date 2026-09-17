@@ -1,7 +1,7 @@
 import { model, Schema } from "mongoose";
 import { UserRecord } from "./user.entity";
 
-/** Campi mai esposti via API: il tipo User non basta a runtime se si serializza il documento grezzo. */
+//Lista dei campi da nascondere in output (gli stessi di UserInternalFields).
 const INTERNAL_JSON_FIELDS: (keyof UserRecord)[] = [
   'confirmationToken',
   'confirmationTokenExpires',
@@ -17,12 +17,12 @@ function sanitizeUserForApi(ret: Record<string, unknown>) {
   return ret;
 }
 
-const userSchema = new Schema<UserRecord>({
+const userSchema = new Schema<UserRecord>({ //definisce cosa finisce davvero nel db
   email: { type: String, required: true, unique: true },
   nomeTitolare: { type: String, required: true },
   cognomeTitolare: { type: String, required: true },
   dataApertura: { type: Date, required: true },
-  // Readme: IBAN caricato dopo la registrazione; lo yaml lo restituisce comunque (anche vuoto).
+  //IBAN caricato dopo la registrazione; lo yaml lo restituisce comunque (anche vuoto).
   iban: { type: String, default: '' },
   emailConfermata: { type: Boolean, default: false },
   // Usato da auth.confirmRegistration — vedi commento in user.entity (UserInternalFields)

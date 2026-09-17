@@ -11,11 +11,13 @@ import { UserModel } from './user.model';
 const CONFIRMATION_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
 /** toJSON aggiunge id (virtual Mongoose); il cast evita falsi negativi del type checker su UserRecord. */
+//toPublicUser(doc): converte un documento Mongoose in User pubblico chiamando toJSON()
 function toPublicUser(doc: { toJSON(): unknown }): User {
   return doc.toJSON() as unknown as User;
 }
 
 export class UserService {
+  //add(profile, credentials): registrazione
   async add(
     profile: Pick<User, 'nomeTitolare' | 'cognomeTitolare'>,
     credentials: { username: string; password: string }
@@ -23,12 +25,12 @@ export class UserService {
     const existingIdentity =
       await UserIdentityModel.findOne({ 'credentials.username': credentials.username });
     if (existingIdentity) {
-      throw new UserExistsError();
+      throw new UserExistsError(); //controlla se esiste già uno UserIdentity con quello username → UserExistsError
     }
 
-    const confirmationToken = randomBytes(32).toString('hex');
+    const confirmationToken = randomBytes(32).toString('hex'); //genera confirmationToken (32 byte random hex) con scadenza 24h
 
-    const newUser = await UserModel.create({
+    const newUser = await UserModel.create({ //crea lo User con emailConfermata: false
       email: credentials.username,
       nomeTitolare: profile.nomeTitolare,
       cognomeTitolare: profile.cognomeTitolare,
@@ -39,8 +41,10 @@ export class UserService {
       confirmationTokenExpires: new Date(Date.now() + CONFIRMATION_TOKEN_TTL_MS),
     });
 
+    //hasha la password (bcrypt, 10 round)
     const hashedPassword = await bcrypt.hash(credentials.password, 10);
 
+    //crea lo UserIdentity collegato (provider: 'local')
     await UserIdentityModel.create({
       provider: 'local',
       user: newUser,
@@ -50,7 +54,7 @@ export class UserService {
       },
     });
 
-    return toPublicUser(newUser);
+    return toPublicUser(newUser); //ritorna user pubblico
   }
 
   async findById(id: string): Promise<User | null> {
@@ -72,6 +76,7 @@ export class UserService {
   }
 
   /** Conferma email; il movimento "Apertura Conto" resta al modulo movimenti (chiamata da auth). */
+  //confirmByToken: cerca uno user con quel token non scaduto, se non lo trova → NotFoundError, altrimenti setta emailConfermata: true e rimuove il token.
   async confirmByToken(token: string): Promise<User> {
     const doc = await UserModel.findOne({
       confirmationToken: token,
@@ -89,6 +94,7 @@ export class UserService {
     return toPublicUser(doc);
   }
 
+  //updatePassword: recupera UserIdentity, verifica la vecchia password con bcrypt.compare, se ok aggiorna l'hash e salva; poi ri-recupera lo User per restituirlo.
   async updatePassword(
     userId: string,
     vecchiaPassword: string,

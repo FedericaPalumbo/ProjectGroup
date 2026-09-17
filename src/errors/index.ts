@@ -5,4 +5,4 @@ import { passwordMismatchHandler } from "./password-mismatch";
 import { insufficientBalanceHandler } from "./insufficient-balance-error";
 
 
-export const errorHandlers = [validationHandler, notFoundHandler, genericErrorHandler, passwordMismatchHandler, insufficientBalanceHandler];
+export const errorHandlers = [validationHandler, notFoundHandler, passwordMismatchHandler, insufficientBalanceHandler, genericErrorHandler];
