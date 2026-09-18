@@ -1,4 +1,4 @@
-import { Equals, IsEmail, IsString, Matches } from "class-validator";
+import { IsEmail, IsString, Matches } from "class-validator";
 
 const passwordPattern = '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,}$';
 
@@ -12,7 +12,7 @@ export class registerDto {
   })
   password: string;
 
-  @Equals('password', { message: 'confermaPassword must match password' })
+  @IsString()
   confermaPassword: string;
 
   @IsString()
@@ -28,4 +28,9 @@ export class loginDto {
 
   @IsString()
   password: string;
+}
+
+export class confirmParams {
+  @Matches(/^[a-f0-9]{64}$/, { message: 'invalid confirmation token' })
+  token: string;
 }
