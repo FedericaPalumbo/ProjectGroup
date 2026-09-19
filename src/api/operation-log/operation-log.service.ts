@@ -1,3 +1,5 @@
+//qualunque controller (login, ricariche/bonifici) la chiama ( registra(...)) passandogli cosa è successo,
+// e lei si occupa di scrivere la riga nel database.
 import { Types } from "mongoose";
 import { OperationLogModel } from "./operation-log.model";
 import { TipoOperazione } from "./operation-log.entity";
