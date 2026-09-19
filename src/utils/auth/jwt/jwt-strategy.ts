@@ -1,22 +1,23 @@
 import passport from "passport";
 import { ExtractJwt, Strategy as JwtStrategy } from "passport-jwt";
 import { UserModel } from "../../../api/user/user.model";
+import { JWT_SECRET } from "./jwt.config";
 
 passport.use(new JwtStrategy({
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-    secretOrKey: 'my_jwt_secret'
-    },
+    secretOrKey: JWT_SECRET
+},
     async (payload, done) => {
-        try{
+        try {
             const user = await UserModel.findById(payload.id);
-            if(user){
+            if (user) {
                 done(null, user.toObject());
             }
-            else{
-                done(null, false, {message: 'invalid token'})
+            else {
+                done(null, false, { message: 'invalid token' })
             }
         }
-        catch(err){
+        catch (err) {
             done(err)
         }
     })

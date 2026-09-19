@@ -8,6 +8,10 @@ import { PasswordMismatchError } from "../../errors/password-mismatch";
 import { NotFoundError } from "../../errors/not-found.error";
 import passport from "passport";
 import * as jwt from 'jsonwebtoken';
+import { getClientIp } from "../../utils/get-client-ip";
+import { JWT_SECRET, JWT_EXPIRES_IN } from "../../utils/auth/jwt/jwt.config";
+import OperationLogService from "../operation-log/operation-log.service";
+
 
 export const register = async (
   req: TypedRequest<registerDto>,
@@ -73,28 +77,37 @@ export const login = async (
   try {
     passport.authenticate('local',
       { session: false },
-      (loginErr, user, info) => {
+      async (loginErr, user, info) => {
+        try {
+          const ip = getClientIp(req);
 
-        if (loginErr) {
-          next(loginErr);
-          return;
-        }
+          if (loginErr) {
+            next(loginErr);
+            return;
+          }
 
-        if (!user) {
-          res.status(401);
+          if (!user) {
+            await OperationLogService.registra('Login', false, ip);
+            res.status(401);
+            res.json({
+              error: 'LoginError',
+              message: info.message
+            });
+            return;
+          }
+
+          await OperationLogService.registra('Login', true, ip, user.id);
+
+          // generare token
+          const token = jwt.sign(user, JWT_SECRET, { expiresIn: '7 days' })
           res.json({
-            error: 'LoginError',
-            message: info.message
+            user,
+            token
           });
-          return;
-        }
 
-        // generare token
-        const token = jwt.sign(user, 'my_jwt_secret', { expiresIn: '7 days' })
-        res.json({
-          user,
-          token
-        });
+        } catch (err) {
+          next(err);
+        }
       }
     )(req, res, next);
   } catch (err) {
