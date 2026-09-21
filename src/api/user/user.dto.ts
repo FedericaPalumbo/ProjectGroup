@@ -16,3 +16,8 @@ export class ChangePasswordDto {
   @IsString()
   confermaNuovaPassword: string;
 }
+
+export class ChangeIbanDto {
+  @IsIBAN()
+  iban: string;
+}

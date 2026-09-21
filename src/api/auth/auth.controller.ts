@@ -11,7 +11,7 @@ import * as jwt from 'jsonwebtoken';
 import { getClientIp } from "../../utils/get-client-ip";
 import { JWT_SECRET, JWT_EXPIRES_IN } from "../../utils/auth/jwt/jwt.config";
 import OperationLogService from "../operation-log/operation-log.service";
-
+import MovimentoService from "../movimenti/movimento.service";
 
 export const register = async (
   req: TypedRequest<registerDto>,
@@ -53,8 +53,7 @@ export const confirmRegistration = async (
   try {
     const user = await UserService.confirmByToken(req.params.token);
 
-    // TODO: quando sarà implementato il modulo "movimenti", richiamare qui V
-    // MovimentoService.creaAperturaConto(user.id) per il movimento di apertura a saldo 0.
+    await MovimentoService.creaAperturaConto(user.id); //movimento di apertura con importo e saldo a 0
 
     res.json(user);
   } catch (err) {

@@ -94,6 +94,22 @@ export class UserService {
     return toPublicUser(doc);
   }
 
+  //per inserire l'iban dopo la registrazione
+  //updateIban: imposta l'iban dell'utente; se viola l'indice unique lancia un errore generico, senza rivelare che l'iban esiste già.
+  async updateIban(userId: string, iban: string): Promise<User> {
+    try {
+      const doc = await UserModel.findByIdAndUpdate(userId, { iban }, { new: true });
+      if (!doc) {
+        throw new NotFoundError();
+      }
+      return toPublicUser(doc);
+    } catch (err) {
+      if ((err as { code?: number }).code === 11000) {
+        throw new Error("Impossibile aggiornare l'IBAN");
+      }
+      throw err;
+    }
+  }
   //updatePassword: recupera UserIdentity, verifica la vecchia password con bcrypt.compare, se ok aggiorna l'hash e salva; poi ri-recupera lo User per restituirlo.
   async updatePassword(
     userId: string,

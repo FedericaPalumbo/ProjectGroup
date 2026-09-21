@@ -1,17 +1,19 @@
 import { Router } from "express";
 import authRouter from './auth/auth.router';
 import userRouter from './user/user.router';
+import categorieRouter from "./categorie/categorie.router";
+import ricaricheRouter from './ricariche/ricariche.routes';
+import movimentoRouter from "./movimenti/movimento.router";
+import bonificoRouter from "./bonifico/bonifico.router";
 
 const router = Router();
 
 router.use(authRouter);
 router.use('/account', userRouter);
-
-// TODO: montare qui i router mancanti non appena implementati, secondo lo yaml:
-// router.use('/movimenti', movimentiRouter);  // GET /movimenti, GET /movimenti/:id
-// router.use('/categorie', categorieRouter);  // GET /categorie
-// router.use('/ricariche', ricaricheRouter);  // POST /ricariche
-// router.use('/bonifici', bonificiRouter);    // POST /bonifici
+router.use('/categorie', categorieRouter);
+router.use('/ricariche', ricaricheRouter);
+router.use('/movimenti', movimentoRouter);
+router.use('/bonifici', bonificoRouter);
 
 
 export default router;
