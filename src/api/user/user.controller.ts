@@ -11,14 +11,13 @@ import { confirmParams } from '../auth/auth.dto';
 import { NotFoundError } from '../../errors/not-found.error';
 
 /** GET /account/me — aggregato home (saldo + ultimi movimenti: modulo movimenti). */
-//getAccountMe: prende l'utente da req.user (già autenticato) e restituisce un aggregato home. saldo e ultimiMovimenti sono hardcoded a 0/[]. DA FARE
+//getAccountMe: prende l'utente da req.user (già autenticato) e restituisce un aggregato home. saldo è quello corrente di user; ultimiMovimenti è ancora hardcoded a []. DA FARE
 export const getAccountMe = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const utente = req.user as User;
     res.json({
       utente,
-      // TODO movimenti: saldo reale e ultimi 5 movimenti
-      saldo: 0,
+      saldo: utente.saldo,
       ultimiMovimenti: [],
     });
   } catch (err) {
@@ -32,6 +31,7 @@ export const getAccountProfile = async (req: Request, res: Response, next: NextF
   try {
     const userId = (req.user as User).id;
     const profilo = await UserService.findById(userId);
+
     if (!profilo) {
       res.status(404).json({ error: 'NotFound', message: 'User not found' });
       return;

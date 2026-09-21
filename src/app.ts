@@ -5,7 +5,7 @@ import bodyParser from 'body-parser';
 import apiRouter from './api/routes';
 import { errorHandlers } from './errors';
 import './utils/auth/auth-handlers';
-
+import './utils/auth/jwt/jwt-strategy';
 
 const app = express();
 

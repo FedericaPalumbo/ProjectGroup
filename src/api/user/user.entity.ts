@@ -5,6 +5,7 @@ export type User = { //tipo "pubblico": Dati che vengono restituiti dalle API
   cognomeTitolare: string;
   dataApertura: Date;
   iban: string;
+  saldo: number;
 };
 
 /*

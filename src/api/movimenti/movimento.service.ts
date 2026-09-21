@@ -1,4 +1,5 @@
 import { Workbook } from 'exceljs';
+import { connection } from 'mongoose';
 import { InsufficientBalanceError } from '../../errors/insufficient-balance-error';
 import CategorieService from '../categorie/categorie.service';
 import { CreaMovimentoDto, ListMovimentiQueryDto } from './movimento.dto';
@@ -24,33 +25,22 @@ function fineGiornata(data: Date): Date {
 }
 
 export class MovimentoService {
-  //getSaldo: il saldo del conto è quello dell'ultimo movimento (0 se il conto non ha ancora movimenti)
-  async getSaldo(contoCorrenteId: string): Promise<number> {
-    const ultimo = await MovimentoModel.findOne({ contoCorrenteId }).sort(ORDINE_RECENTI);
-    return ultimo?.saldo ?? 0;
-  }
-
 
   //creaMovimento: unico punto in cui si scrive un movimento. Calcola il nuovo saldo (importo con segno: negativo = uscita)
   //e, se andrebbe sotto zero, lancia InsufficientBalanceError: ricariche e bonifici non devono rifare il controllo.
   async creaMovimento(movimento: CreaMovimentoDto): Promise<Movimento> {
-
     if (movimento.importo !== 0) {
       const conto = await UserService.findById(movimento.contoCorrenteId);
       if (!conto?.iban) {
         throw new MissingIbanError();
       }
     }
-
-    const saldoAttuale = await this.getSaldo(movimento.contoCorrenteId);
-    const saldo = Math.round((saldoAttuale + movimento.importo) * 100) / 100; //arrotonda ai centesimi (evita 0.1 + 0.2)
-
-    if (saldo < 0) {
-      throw new InsufficientBalanceError();
-    }
-
-    const doc = await MovimentoModel.create({ ...movimento, saldo });
-    return toPublicMovimento(doc);
+    //transazione: se la create fallisce, anche l'aggiornamento del saldo su user viene annullato
+    return connection.transaction(async session => {
+      const saldo = await UserService.applicaImporto(movimento.contoCorrenteId, movimento.importo, session);
+      const [doc] = await MovimentoModel.create([{ ...movimento, saldo }], { session }); //con la session, create vuole l'array
+      return toPublicMovimento(doc);
+    });
   }
 
   //creaAperturaConto: movimento di apertura con importo e saldo a 0, chiamato da auth dopo la conferma della registrazione

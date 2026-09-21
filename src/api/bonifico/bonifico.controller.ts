@@ -28,18 +28,16 @@ export const createBonifico = async (req: TypedRequest<BonificoDto>, res: Respon
       // non posso auto-inviarmi un bonifico -> devo accertarmi che l'account del mittente sia diverso da quello del destinatario
     }
 
-    const [categoriaUscita, categoriaEntrata] = await Promise.all([
-      CategorieService.findByNome('Bonifico Uscita'),
-      CategorieService.findByNome('Bonifico Entrata'),
-    ]);
-    if (!categoriaUscita || !categoriaEntrata) {
-      throw new Error("Categorie 'Bonifico Uscita' / 'Bonifico Entrata' non presenti: caricare le categorie iniziali");
+    // Recupero l'unica categoria "Bonifico" presente a database
+    const categoriaBonifico = await CategorieService.findByNome('Bonifico');
+    if (!categoriaBonifico) {
+      throw new Error("Categoria 'Bonifico' non presente: caricare le categorie iniziali");
     }
 
-    // 2. addebito al mittente +  3. verifica il saldo
+    // 2. addebito al mittente + 3. verifica il saldo
     const uscita = await MovimentoService.creaMovimento({
       contoCorrenteId: mittente.id,
-      categoriaMovimentoId: categoriaUscita.id,
+      categoriaMovimentoId: categoriaBonifico.id,
       importo: -importo, // uscita = importo negativo
       descrizioneEstesa:
         `Bonifico disposto a favore di ${destinatario.nomeTitolare} ${destinatario.cognomeTitolare} (${destinatario.iban})`,
@@ -49,7 +47,7 @@ export const createBonifico = async (req: TypedRequest<BonificoDto>, res: Respon
     try {
       await MovimentoService.creaMovimento({
         contoCorrenteId: destinatario.id,
-        categoriaMovimentoId: categoriaEntrata.id,
+        categoriaMovimentoId: categoriaBonifico.id,
         importo,
         descrizioneEstesa: `Bonifico disposto da ${mittente.nomeTitolare} ${mittente.cognomeTitolare}`,
       });
@@ -57,7 +55,7 @@ export const createBonifico = async (req: TypedRequest<BonificoDto>, res: Respon
       // in caso di accredito fallito: ritorno l'addebito così il mittente non perde i soldi
       await MovimentoService.creaMovimento({
         contoCorrenteId: mittente.id,
-        categoriaMovimentoId: categoriaEntrata.id,
+        categoriaMovimentoId: categoriaBonifico.id,
         importo,
         descrizioneEstesa: 'Storno bonifico non eseguito',
       }).catch(e => console.error('Storno bonifico non riuscito', e));

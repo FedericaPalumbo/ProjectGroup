@@ -7,14 +7,15 @@ import { ListMovimentiQueryDto } from './movimento.dto';
 import MovimentoService from './movimento.service';
 
 /** GET /movimenti — ultimi n movimenti con filtri opzionali (categoria, intervallo di date); con format esporta in csv/xlsx. */
-//listMovimenti: saldoFinale è restituito solo senza filtri (RicercaMovimenti1); se dataInizio > dataFine risponde 400.
+//listMovimenti: saldoFinale è restituito solo senza filtri (RicercaMovimenti1) e coincide con user.saldo; se dataInizio > dataFine risponde 400.
 export const listMovimenti = async (
   req: TypedRequest<unknown, ListMovimentiQueryDto>,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const contoCorrenteId = (req.user as User).id;
+    const user = req.user as User;
+    const contoCorrenteId = user.id;
     const { categoriaId, dataInizio, dataFine, format } = req.query;
 
     if (dataInizio && dataFine && dataInizio.getTime() > dataFine.getTime()) {
@@ -34,7 +35,7 @@ export const listMovimenti = async (
     }
 
     const senzaFiltri = !categoriaId && !dataInizio && !dataFine;
-    const saldoFinale = senzaFiltri ? await MovimentoService.getSaldo(contoCorrenteId) : undefined;
+    const saldoFinale = senzaFiltri ? user.saldo : undefined; //req.user è caricato da DB dalla strategia jwt: il saldo è quello corrente
 
     res.json({ movimenti, saldoFinale });
   } catch (err) {

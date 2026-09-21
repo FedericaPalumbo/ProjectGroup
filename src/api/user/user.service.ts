@@ -1,5 +1,5 @@
 import { randomBytes } from 'crypto';
-import { Types } from 'mongoose';
+import { ClientSession, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { UserExistsError } from '../../errors/user-exists.error';
 import { NotFoundError } from '../../errors/not-found.error';
@@ -7,6 +7,7 @@ import { WrongCredentialsError } from '../../errors/wrong-credentials.error';
 import { UserIdentityModel } from '../../utils/auth/local/user-identity.model';
 import { User } from './user.entity';
 import { UserModel } from './user.model';
+import { InsufficientBalanceError } from '../../errors/insufficient-balance-error';
 
 const CONFIRMATION_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
@@ -110,6 +111,19 @@ export class UserService {
       throw err;
     }
   }
+  //applicaImporto: unico punto in cui cambia user.saldo. Atomico: se l'importo (negativo) supera il saldo nessun documento fa match
+  async applicaImporto(userId: string, importo: number, session?: ClientSession): Promise<number> {
+    const user = await UserModel.findOneAndUpdate(
+      { _id: userId, saldo: { $gte: -importo } },
+      [{ $set: { saldo: { $round: [{ $add: ['$saldo', importo] }, 2] } } }], //arrotonda ai centesimi (evita 0.1 + 0.2)
+      { new: true, session, updatePipeline: true }
+    );
+    if (!user) {
+      throw new InsufficientBalanceError();
+    }
+    return user.saldo;
+  }
+
   //updatePassword: recupera UserIdentity, verifica la vecchia password con bcrypt.compare, se ok aggiorna l'hash e salva; poi ri-recupera lo User per restituirlo.
   async updatePassword(
     userId: string,

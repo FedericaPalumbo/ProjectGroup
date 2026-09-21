@@ -1,5 +1,5 @@
 //validazione input
-import { IsString, Matches } from 'class-validator';
+import { IsIBAN, IsString, Matches } from 'class-validator';
 
 const passwordPattern = '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,}$';
 

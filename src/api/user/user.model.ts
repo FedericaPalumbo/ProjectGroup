@@ -24,6 +24,7 @@ const userSchema = new Schema<UserRecord>({ //definisce cosa finisce davvero nel
   dataApertura: { type: Date, required: true },
   //IBAN caricato dopo la registrazione; lo yaml lo restituisce comunque (anche vuoto).
   iban: { type: String, default: '' },
+  saldo: { type: Number, default: 0 },
   emailConfermata: { type: Boolean, default: false },
   // Usato da auth.confirmRegistration — vedi commento in user.entity (UserInternalFields)
   confirmationToken: { type: String },
