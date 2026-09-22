@@ -9,16 +9,19 @@ import { getClientIp } from '../../utils/get-client-ip';
 import OperationLogService from '../operation-log/operation-log.service';
 import { confirmParams } from '../auth/auth.dto';
 import { NotFoundError } from '../../errors/not-found.error';
+import MovimentoService from '../movimenti/movimento.service';
 
 /** GET /account/me — aggregato home (saldo + ultimi movimenti: modulo movimenti). */
 //getAccountMe: prende l'utente da req.user (già autenticato) e restituisce un aggregato home. saldo è quello corrente di user; ultimiMovimenti è ancora hardcoded a []. DA FARE
 export const getAccountMe = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const utente = req.user as User;
+    const ultimiMovimenti = await MovimentoService.list(utente.id, { limit: 5 });
+
     res.json({
       utente,
       saldo: utente.saldo,
-      ultimiMovimenti: [],
+      ultimiMovimenti,
     });
   } catch (err) {
     next(err);

@@ -4,6 +4,7 @@ import { Movimento } from "./movimento.entity";
 
 /** Query string di GET /movimenti */
 export class ListMovimentiQueryDto {
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
