@@ -1,7 +1,7 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from 'passport-local';
 import { UserIdentityModel } from "./user-identity.model";
-import { User } from "../../../api/user/user.entity";
+import { User, UserInternalFields } from "../../../api/user/user.entity";
 import * as bcrypt from 'bcrypt';
 
 passport.use('local', new LocalStrategy(
@@ -9,9 +9,9 @@ passport.use('local', new LocalStrategy(
     usernameField: 'email',
     passwordField: 'password'
   },
-  async function(username, password, done) {
+  async function (username, password, done) {
     try {
-      const identity = await UserIdentityModel.findOne({ 'credentials.username': username});
+      const identity = await UserIdentityModel.findOne({ 'credentials.username': username });
       // non trovo l'utente
       if (!identity) {
         return done(null, false, { message: `email ${username} not found` });
@@ -22,12 +22,19 @@ passport.use('local', new LocalStrategy(
         return done(null, false, { message: 'invalid password' });
       }
 
+      // documento populato: emailConfermata va letta qui, prima del toObject()
+      // (il transform di UserModel la rimuove sempre, vedi user.model.ts)
+      const populatedUser = identity.user as unknown as User & UserInternalFields;
+      if (!populatedUser.emailConfermata) {
+        return done(null, false, { message: 'email not confirmed' });
+      }
+
       // populate automatico nel model UserIdentity (pre findOne)
       const user = identity.toObject().user as User;
 
       done(null, user);
 
-    } catch(err) {
+    } catch (err) {
       done(err);
     }
   })

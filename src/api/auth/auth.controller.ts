@@ -28,8 +28,13 @@ export const register = async (
 
     const { user: newUser, confirmationToken } = await UserService.add(profile, credentials);
 
-    //invia la mail di conferma con link `${FRONTEND_URL}/confirm/${confirmationToken}` (vedi utils/mail)
-    await MailService.inviaEmailConferma(newUser.email, newUser.nomeTitolare, confirmationToken);
+    try {
+      await MailService.inviaEmailConferma(newUser.email, newUser.nomeTitolare, confirmationToken);
+    } catch (mailErr) {
+      // utente comunque creato: logghiamo e basta, non blocchiamo la 201
+      // TODO: valutare un endpoint di reinvio della mail di conferma
+      console.error('Invio email di conferma fallito:', mailErr);
+    }
 
     res.status(201).json(newUser);
 
