@@ -57,6 +57,29 @@ paths:
                 $ref: '#/components/schemas/User'
         '400':
           description: Token non valido o scaduto
+  /register/resend:
+    post:
+      tags:
+        - auth
+      summary: Reinvio dell'email di conferma registrazione
+      description: |-
+        Da usare quando l'invio della mail di conferma è fallito in fase di registrazione:
+        rigenera il token (nuova scadenza di 24 ore) e reinvia l'email.
+      operationId: resendConfirmation
+      requestBody:
+        $ref: '#/components/requestBodies/Resend'
+      responses:
+        '200':
+          description: Email di conferma reinviata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Email già confermata
+        '404':
+          description: Nessun utente registrato con questa email
+          
 
   /login:
     post:

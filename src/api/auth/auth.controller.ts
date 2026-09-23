@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { TypedRequest } from "../../utils/typed-request";
-import { confirmParams, registerDto } from "./auth.dto";
+import { confirmParams, registerDto, resendDto } from "./auth.dto";
 import UserService from "../user/user.service";
 import { pick } from 'lodash';
 import { UserExistsError } from "../../errors/user-exists.error";
@@ -12,6 +12,7 @@ import { getClientIp } from "../../utils/get-client-ip";
 import { JWT_SECRET, JWT_EXPIRES_IN } from "../../utils/auth/jwt/jwt.config";
 import OperationLogService from "../operation-log/operation-log.service";
 import MovimentoService from "../movimenti/movimento.service";
+import MailService from "../../utils/mail/mail.service";
 
 export const register = async (
   req: TypedRequest<registerDto>,
@@ -25,11 +26,15 @@ export const register = async (
     const profile = pick(req.body, 'nomeTitolare', 'cognomeTitolare');
     const credentials = { username: req.body.email, password: req.body.password };
 
-    const newUser = await UserService.add(profile, credentials);
+    const { user: newUser, confirmationToken } = await UserService.add(profile, credentials);
 
-    // TODO: inviare email di conferma con link tipo `${FRONTEND_URL}/confirm/${confirmationToken}`.
-    // AAA Manca ancora un servizio di mailing (es. nodemailer) nel progetto.
-
+    try {
+      await MailService.inviaEmailConferma(newUser.email, newUser.nomeTitolare, confirmationToken);
+    } catch (mailErr) {
+      // utente comunque creato: logghiamo e basta, non blocchiamo la 201.
+      // Se l'invio fallisce l'utente non resta bloccato: può richiedere un nuovo invio via POST /register/resend
+      console.error('Invio email di conferma fallito:', mailErr);
+    }
 
     res.status(201).json(newUser);
 
@@ -66,6 +71,26 @@ export const confirmRegistration = async (
     } else {
       next(err);
     }
+  }
+}
+
+export const resendConfirmation = async (
+  req: TypedRequest<resendDto>,
+  res: Response,
+  next: NextFunction) => {
+  try {
+    const { user, confirmationToken } = await UserService.regenerateConfirmationToken(req.body.email);
+
+    try {
+      await MailService.inviaEmailConferma(user.email, user.nomeTitolare, confirmationToken);
+    } catch (mailErr) {
+      console.error('Invio email di conferma fallito:', mailErr);
+    }
+
+    res.json(user);
+
+  } catch (err) {
+    next(err); // NotFoundError e AlreadyConfirmedError gestiti dagli handler globali
   }
 }
 
