@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { TypedRequest } from "../../utils/typed-request";
-import { confirmParams, registerDto } from "./auth.dto";
+import { confirmParams, registerDto, resendDto } from "./auth.dto";
 import UserService from "../user/user.service";
 import { pick } from 'lodash';
 import { UserExistsError } from "../../errors/user-exists.error";
@@ -31,8 +31,8 @@ export const register = async (
     try {
       await MailService.inviaEmailConferma(newUser.email, newUser.nomeTitolare, confirmationToken);
     } catch (mailErr) {
-      // utente comunque creato: logghiamo e basta, non blocchiamo la 201
-      // TODO: valutare un endpoint di reinvio della mail di conferma
+      // utente comunque creato: logghiamo e basta, non blocchiamo la 201.
+      // Se l'invio fallisce l'utente non resta bloccato: può richiedere un nuovo invio via POST /register/resend
       console.error('Invio email di conferma fallito:', mailErr);
     }
 
@@ -71,6 +71,26 @@ export const confirmRegistration = async (
     } else {
       next(err);
     }
+  }
+}
+
+export const resendConfirmation = async (
+  req: TypedRequest<resendDto>,
+  res: Response,
+  next: NextFunction) => {
+  try {
+    const { user, confirmationToken } = await UserService.regenerateConfirmationToken(req.body.email);
+
+    try {
+      await MailService.inviaEmailConferma(user.email, user.nomeTitolare, confirmationToken);
+    } catch (mailErr) {
+      console.error('Invio email di conferma fallito:', mailErr);
+    }
+
+    res.json(user);
+
+  } catch (err) {
+    next(err); // NotFoundError e AlreadyConfirmedError gestiti dagli handler globali
   }
 }
 

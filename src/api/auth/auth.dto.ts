@@ -34,3 +34,7 @@ export class confirmParams {
   @Matches(/^[a-f0-9]{64}$/, { message: 'invalid confirmation token' })
   token: string;
 }
+export class resendDto {
+  @IsEmail()
+  email: string;
+}

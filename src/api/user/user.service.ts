@@ -8,6 +8,7 @@ import { UserIdentityModel } from '../../utils/auth/local/user-identity.model';
 import { User } from './user.entity';
 import { UserModel } from './user.model';
 import { InsufficientBalanceError } from '../../errors/insufficient-balance-error';
+import { AlreadyConfirmedError } from '../../errors/already-confirmed.error';
 
 const CONFIRMATION_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
@@ -94,6 +95,25 @@ export class UserService {
     await doc.save();
 
     return toPublicUser(doc);
+  }
+
+  /** Rigenera il confirmationToken per un utente non ancora confermato (usato da POST /register/resend). */
+  //regenerateConfirmationToken: stessa logica di generazione/scadenza token di add(), ma su uno user già esistente.
+  async regenerateConfirmationToken(email: string): Promise<{ user: User; confirmationToken: string }> {
+    const doc = await UserModel.findOne({ email });
+    if (!doc) {
+      throw new NotFoundError();
+    }
+    if (doc.emailConfermata) {
+      throw new AlreadyConfirmedError();
+    }
+
+    const confirmationToken = randomBytes(32).toString('hex');
+    doc.confirmationToken = confirmationToken;
+    doc.confirmationTokenExpires = new Date(Date.now() + CONFIRMATION_TOKEN_TTL_MS);
+    await doc.save();
+
+    return { user: toPublicUser(doc), confirmationToken };
   }
 
   //per inserire l'iban dopo la registrazione
