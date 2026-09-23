@@ -18,11 +18,12 @@ function toPublicUser(doc: { toJSON(): unknown }): User {
 }
 
 export class UserService {
-  //add(profile, credentials): registrazione
+  //add(profile, credentials): registrazione. Ritorna anche il confirmationToken "in chiaro"
+  //(escluso da toPublicUser/toJSON) perché serve ad auth.controller per l'invio dell'email di conferma.
   async add(
     profile: Pick<User, 'nomeTitolare' | 'cognomeTitolare'>,
     credentials: { username: string; password: string }
-  ): Promise<User> {
+  ): Promise<{ user: User; confirmationToken: string }> {
     const existingIdentity =
       await UserIdentityModel.findOne({ 'credentials.username': credentials.username });
     if (existingIdentity) {
@@ -55,7 +56,7 @@ export class UserService {
       },
     });
 
-    return toPublicUser(newUser); //ritorna user pubblico
+    return { user: toPublicUser(newUser), confirmationToken }; //user pubblico + token in chiaro per l'email
   }
 
   async findById(id: string): Promise<User | null> {
@@ -154,3 +155,4 @@ export class UserService {
 }
 
 export default new UserService();
+

@@ -12,6 +12,7 @@ import { getClientIp } from "../../utils/get-client-ip";
 import { JWT_SECRET, JWT_EXPIRES_IN } from "../../utils/auth/jwt/jwt.config";
 import OperationLogService from "../operation-log/operation-log.service";
 import MovimentoService from "../movimenti/movimento.service";
+import MailService from "../../utils/mail/mail.service";
 
 export const register = async (
   req: TypedRequest<registerDto>,
@@ -25,11 +26,10 @@ export const register = async (
     const profile = pick(req.body, 'nomeTitolare', 'cognomeTitolare');
     const credentials = { username: req.body.email, password: req.body.password };
 
-    const newUser = await UserService.add(profile, credentials);
+    const { user: newUser, confirmationToken } = await UserService.add(profile, credentials);
 
-    // TODO: inviare email di conferma con link tipo `${FRONTEND_URL}/confirm/${confirmationToken}`.
-    // AAA Manca ancora un servizio di mailing (es. nodemailer) nel progetto.
-
+    //invia la mail di conferma con link `${FRONTEND_URL}/confirm/${confirmationToken}` (vedi utils/mail)
+    await MailService.inviaEmailConferma(newUser.email, newUser.nomeTitolare, confirmationToken);
 
     res.status(201).json(newUser);
 
