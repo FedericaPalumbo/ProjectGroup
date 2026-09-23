@@ -28,16 +28,20 @@ export const createBonifico = async (req: TypedRequest<BonificoDto>, res: Respon
       // non posso auto-inviarmi un bonifico -> devo accertarmi che l'account del mittente sia diverso da quello del destinatario
     }
 
-    // Recupero l'unica categoria "Bonifico" presente a database
-    const categoriaBonifico = await CategorieService.findByNome('Bonifico');
-    if (!categoriaBonifico) {
-      throw new Error("Categoria 'Bonifico' non presente: caricare le categorie iniziali");
+    // Recupero le due categorie "Bonifico Uscita" / "Bonifico Entrata" presenti a database
+    const categoriaBonificoUscita = await CategorieService.findByNome('Bonifico Uscita');
+    if (!categoriaBonificoUscita) {
+      throw new Error("Categoria 'Bonifico Uscita' non presente: caricare le categorie iniziali");
+    }
+    const categoriaBonificoEntrata = await CategorieService.findByNome('Bonifico Entrata');
+    if (!categoriaBonificoEntrata) {
+      throw new Error("Categoria 'Bonifico Entrata' non presente: caricare le categorie iniziali");
     }
 
     // 2. addebito al mittente + 3. verifica il saldo
     const uscita = await MovimentoService.creaMovimento({
       contoCorrenteId: mittente.id,
-      categoriaMovimentoId: categoriaBonifico.id,
+      categoriaMovimentoId: categoriaBonificoUscita.id,
       importo: -importo, // uscita = importo negativo
       descrizioneEstesa:
         `Bonifico disposto a favore di ${destinatario.nomeTitolare} ${destinatario.cognomeTitolare} (${destinatario.iban})`,
@@ -47,15 +51,15 @@ export const createBonifico = async (req: TypedRequest<BonificoDto>, res: Respon
     try {
       await MovimentoService.creaMovimento({
         contoCorrenteId: destinatario.id,
-        categoriaMovimentoId: categoriaBonifico.id,
+        categoriaMovimentoId: categoriaBonificoEntrata.id,
         importo,
-        descrizioneEstesa: `Bonifico disposto da ${mittente.nomeTitolare} ${mittente.cognomeTitolare}`,
+        descrizioneEstesa: `Bonifico disposto da ${mittente.nomeTitolare} ${mittente.cognomeTitolare} (${mittente.iban})`,
       });
     } catch (err) {
       // in caso di accredito fallito: ritorno l'addebito così il mittente non perde i soldi
       await MovimentoService.creaMovimento({
         contoCorrenteId: mittente.id,
-        categoriaMovimentoId: categoriaBonifico.id,
+        categoriaMovimentoId: categoriaBonificoEntrata.id,
         importo,
         descrizioneEstesa: 'Storno bonifico non eseguito',
       }).catch(e => console.error('Storno bonifico non riuscito', e));
