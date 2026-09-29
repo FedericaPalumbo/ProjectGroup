@@ -49,12 +49,12 @@ paths:
           required: true
           description: Token di conferma ricevuto via email
       responses:
-        '200':
-          description: Account confermato; viene creato automaticamente il movimento di apertura con saldo 0
+                '200':
+          description: Account confermato; viene creato automaticamente il movimento di apertura con saldo 0. Restituisce anche il token JWT, quindi l'utente è già autenticato
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/Login'
         '400':
           description: Token non valido o scaduto
   /register/resend:

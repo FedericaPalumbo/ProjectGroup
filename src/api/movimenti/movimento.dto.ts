@@ -8,7 +8,7 @@ export class ListMovimentiQueryDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  limit: number;
+  limit?: number;
 
   @IsOptional()
   @IsMongoId()

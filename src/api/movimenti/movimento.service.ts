@@ -62,7 +62,7 @@ export class MovimentoService {
   //list: ultimi n movimenti del conto, dal più recente, con filtri opzionali per categoria e intervallo di date.
   //Serve sia alle ricerche sia alla home (limit: 5)
   async list(contoCorrenteId: string, filtri: ListMovimentiQueryDto): Promise<Movimento[]> {
-    const { categoriaId, dataInizio, dataFine } = filtri;
+    const { categoriaId, dataInizio, dataFine, limit } = filtri;
 
     const query = MovimentoModel.find({ contoCorrenteId })
       .sort(ORDINE_RECENTI)
@@ -76,6 +76,9 @@ export class MovimentoService {
     }
     if (dataFine) {
       query.where('data').lte(fineGiornata(dataFine).getTime());
+    }
+    if (limit) {
+      query.limit(limit);
     }
 
     const docs = await query;

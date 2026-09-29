@@ -14,6 +14,9 @@ import OperationLogService from "../operation-log/operation-log.service";
 import MovimentoService from "../movimenti/movimento.service";
 import MailService from "../../utils/mail/mail.service";
 
+import { User } from "../user/user.entity";
+const signToken = (user: User) => jwt.sign(user, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+
 export const register = async (
   req: TypedRequest<registerDto>,
   res: Response,
@@ -60,7 +63,8 @@ export const confirmRegistration = async (
 
     await MovimentoService.creaAperturaConto(user.id); //movimento di apertura con importo e saldo a 0
 
-    res.json(user);
+    // aprendo il link ricevuto via email l'utente ha dimostrato di possedere l'indirizzo: lo autentico subito
+    res.json({ user, token: signToken(user) });
   } catch (err) {
     if (err instanceof NotFoundError) {
       res.status(400);
@@ -123,7 +127,7 @@ export const login = async (
           await OperationLogService.registra('Login', true, ip, user.id);
 
           // generare token
-          const token = jwt.sign(user, JWT_SECRET, { expiresIn: '7 days' })
+          const token = signToken(user);
           res.json({
             user,
             token
